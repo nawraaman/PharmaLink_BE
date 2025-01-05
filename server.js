@@ -4,7 +4,9 @@ const dotenv = require('dotenv')
 const cors = require('cors')
 const pharmacyRoutes = require('./controllers/pharmacy')
 const itemRoutes = require('./controllers/item')
-
+const authRouter = require('./controllers/auth')
+const userRouter = require('./controllers/user')
+const { verifyToken } = require('./middleware/jwtUtils')
 dotenv.config()
 
 const app = express()
@@ -13,8 +15,10 @@ app.use(cors({ origin: 'http://localhost:5174' }))
 app.use(express.json())
 
 // Routes
-app.use('/api/pharmacies', pharmacyRoutes)
-app.use('/api/items', itemRoutes)
+app.use('/auth', authRouter)
+app.use('/user', verifyToken, userRouter)
+app.use('/pharmacy', verifyToken, pharmacyRouter)
+app.use('/item', verifyToken, itemRoutes)
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)
