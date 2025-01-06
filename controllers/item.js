@@ -1,4 +1,3 @@
-const Pharmacy = require('..models/Item')
 const express = require('express')
 const Item = require('../models/Item')
 const router = express.Router()

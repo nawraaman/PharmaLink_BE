@@ -17,7 +17,7 @@ app.use(express.json())
 // Routes
 app.use('/auth', authRouter)
 app.use('/user', verifyToken, userRouter)
-app.use('/pharmacy', verifyToken, pharmacyRouter)
+app.use('/pharmacy', verifyToken, pharmacyRoutes)
 app.use('/item', verifyToken, itemRoutes)
 
 // Database Connection
