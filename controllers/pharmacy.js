@@ -10,9 +10,11 @@ const checkRole = (roles) => (req, res, next) => {
   next()
 }
 
-// create a new pharmacy (admin only)
-router.post('/', checkRole(['admin']), async (req, res) => {
+// create a new pharmacy (vendor only)
+router.post('/', checkRole(['vendor']), async (req, res) => {
   try {
+    req.body.userId = req.user._id
+
     const newPharmacy = await Pharmacy.create(req.body)
     res.status(201).json(newPharmacy)
   } catch (error) {
