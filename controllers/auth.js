@@ -5,8 +5,8 @@ const router = require('express').Router()
 
 router.post('/signup', async (req, res) => {
   try {
-    const { username, password, phoneNumber } = req.body
-    if (!username || !password || !phoneNumber)
+    const { username, password } = req.body
+    if (!username || !password)
       return res.status(400).json({ error: 'Missing required fields.' })
     const userExist = await User.findOne({ username })
     if (userExist)
@@ -14,8 +14,7 @@ router.post('/signup', async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, +process.env.SALT)
     const user = await User.create({
       username,
-      password: hashedPassword,
-      phoneNumber
+      password: hashedPassword
     })
     const token = signToken(user)
     return res.status(201).json({ message: 'User created', token })
