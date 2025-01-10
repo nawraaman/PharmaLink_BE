@@ -1,19 +1,46 @@
-const Pharmacy = require('../models/Pharmacy')
 const express = require('express')
+const Pharmacy = require('../models/Pharmacy')
+const User = require('../models/User')
+const multer = require('multer')
 const router = express.Router()
 
-// check role permissions
-const checkRole = (roles) => (req, res, next) => {
-  if (!roles.includes(req.user.role)) {
-    return res.status(403).json({ error: 'Access denied.' })
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads/logos')
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`)
   }
-  next()
+})
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true)
+  } else {
+    cb(new Error('Only image files are allowed'))
+  }
 }
 
-// create a new pharmacy (vendor only)
-router.post('/', checkRole(['vendor']), async (req, res) => {
+const upload = multer({ storage, fileFilter })
+
+// Create pharmacy (vendors only, and must be approved)
+router.post('/', upload.single('logo'), async (req, res) => {
   try {
+    if (req.user.role !== 'vendor') {
+      return res
+        .status(403)
+        .json({ error: 'Only vendors can create pharmacies.' })
+    }
+
+    const user = await User.findById(req.user._id)
+    if (!user || !user.approval) {
+      return res
+        .status(403)
+        .json({ error: 'You are not approved to create a pharmacy.' })
+    }
+
     req.body.userId = req.user._id
+    req.body.logo = `/uploads/logos/${req.file.filename}`
 
     const newPharmacy = await Pharmacy.create(req.body)
     res.status(201).json(newPharmacy)
@@ -22,59 +49,41 @@ router.post('/', checkRole(['vendor']), async (req, res) => {
   }
 })
 
-// get all pharmacies (all roles)
-router.get(
-  '/',
-  checkRole(['admin', 'vendor', 'customer']),
-  async (req, res) => {
-    try {
-      const pharmacies = await Pharmacy.find()
-      res.status(200).json(pharmacies)
-    } catch (error) {
-      res.status(500).json({ error: error.message })
-    }
+// Get all pharmacies (all roles)
+router.get('/', async (req, res) => {
+  try {
+    const pharmacies = await Pharmacy.find()
+    res.status(200).json(pharmacies)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
   }
-)
+})
 
-// get pharmacy by Id (all roles)
-router.get(
-  '/:pharmacyId',
-  checkRole(['admin', 'vendor', 'customer']),
-  async (req, res) => {
-    try {
-      const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
-      if (!pharmacy) {
-        return res.status(404).json({ error: 'Pharmacy not found.' })
-      }
-      res.status(200).json(pharmacy)
-    } catch (error) {
-      res.status(500).json({ error: error.message })
+// Get pharmacy by ID (all roles)
+router.get('/:pharmacyId', async (req, res) => {
+  try {
+    const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
+    if (!pharmacy) {
+      return res.status(404).json({ error: 'Pharmacy not found.' })
     }
+    res.status(200).json(pharmacy)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
   }
-)
+})
 
-// update pharmacy (admin: any, Vendor: only their own)
-router.put('/:pharmacyId', checkRole(['admin', 'vendor']), async (req, res) => {
+// Update pharmacy (admin: any, vendor: only their own)
+router.put('/:pharmacyId', async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
     if (!pharmacy) {
       return res.status(404).json({ error: 'Pharmacy not found.' })
     }
 
-    // admins can edit any pharmacy
-    if (req.user.role === 'admin') {
-      const updatedPharmacy = await Pharmacy.findByIdAndUpdate(
-        req.params.pharmacyId,
-        req.body,
-        { new: true, runValidators: true }
-      )
-      return res.status(200).json(updatedPharmacy)
-    }
-
-    // vendors can only edit their own pharmacy
     if (
-      req.user.role === 'vendor' &&
-      pharmacy.userId.toString() === req.user._id
+      req.user.role === 'admin' ||
+      (req.user.role === 'vendor' &&
+        pharmacy.userId.toString() === req.user._id)
     ) {
       const updatedPharmacy = await Pharmacy.findByIdAndUpdate(
         req.params.pharmacyId,
@@ -84,16 +93,19 @@ router.put('/:pharmacyId', checkRole(['admin', 'vendor']), async (req, res) => {
       return res.status(200).json(updatedPharmacy)
     }
 
-    // if not admin or authorized vendor
     return res.status(403).json({ error: 'Access denied.' })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
-// delete pharmacy (admin only)
-router.delete('/:pharmacyId', checkRole(['admin']), async (req, res) => {
+// Delete pharmacy (admin only)
+router.delete('/:pharmacyId', async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied.' })
+    }
+
     const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
     if (!pharmacy) {
       return res.status(404).json({ error: 'Pharmacy not found.' })
