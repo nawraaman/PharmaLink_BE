@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken')
 const signToken = (user) => {
   const token = jwt.sign(
     {
-      _id: user._id
+      _id: user._id,
+      role: user.role
     },
     process.env.JWT_SECRET
   )
@@ -14,12 +15,18 @@ const verifyToken = (req, res, next) => {
   try {
     const token = req.headers.authorization.split('Bearer ')[1]
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    req.user = decoded
+
+    req.user = {
+      _id: decoded._id,
+      role: decoded.role
+    }
+
     next()
   } catch (error) {
-    res.status(401).json('Invalid token.')
+    res.status(401).json({ error: 'Invalid or missing token.' })
   }
 }
+
 module.exports = {
   signToken,
   verifyToken
