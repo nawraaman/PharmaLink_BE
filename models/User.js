@@ -13,7 +13,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      required: true
+      required: true,
+      default: 'vendor'
+    },
+    Approved: {
+      type: Boolean,
+      required: true,
+      default: false
     }
   },
   {
