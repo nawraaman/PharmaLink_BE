@@ -73,4 +73,18 @@ router.delete('/:pharmacyId', async (req, res) => {
   }
 })
 
+router.get('/user/:userId/pharmacy-count', async (req, res) => {
+  const { userId } = req.params
+
+  try {
+    const pharmacyCount = await Pharmacy.countDocuments({ userId })
+    return res.status(200).json({ count: pharmacyCount })
+  } catch (error) {
+    console.error(error)
+    return res
+      .status(500)
+      .json({ message: 'Something went wrong while counting pharmacies.' })
+  }
+})
+
 module.exports = router
