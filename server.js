@@ -11,13 +11,13 @@ dotenv.config()
 
 const app = express()
 
-app.use(cors({ origin: 'http://localhost:5174' }))
+app.use(cors({ origin: 'http://localhost:5173' }))
 app.use(express.json())
 
 // Routes
 app.use('/auth', authRouter)
 app.use('/user', verifyToken, userRouter)
-app.use('/pharmacy', verifyToken, pharmacyRoutes)
+app.use('/pharmacy', pharmacyRoutes)
 app.use('/item', verifyToken, itemRoutes)
 
 // Database Connection
