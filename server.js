@@ -10,7 +10,7 @@ const { verifyToken } = require('./middleware/jwtUtils')
 dotenv.config()
 
 const app = express()
-
+app.use(express.static('public'))
 app.use(cors({ origin: 'http://localhost:5173' }))
 app.use(express.json())
 
