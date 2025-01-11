@@ -2,6 +2,7 @@ const express = require('express')
 const Item = require('../models/Item')
 const Pharmacy = require('../models/Pharmacy')
 const multer = require('multer')
+const { verifyToken } = require('../middleware/jwtUtils')
 const router = express.Router()
 
 const storage = multer.diskStorage({
@@ -23,29 +24,54 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter })
 
-// Create a new item(admin & vendor)
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', verifyToken, upload.single('image'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin' && req.user.role !== 'vendor') {
+    console.log('User Role:', req.user.role)
+    console.log('Request Body:', req.body)
+    console.log('File:', req.file)
+
+    if (req.user.role !== 'Admin' && req.user.role !== 'Vendor') {
       return res.status(403).json({ error: 'Access denied.' })
     }
 
-    if (req.user.role === 'vendor') {
-      const pharmacy = await Pharmacy.findById(req.body.pharmacyId)
-      if (!pharmacy || String(pharmacy.userId) !== req.user._id) {
-        return res
-          .status(403)
-          .json({ error: 'Access denied to this pharmacy.' })
-      }
+    const pharmacy = await Pharmacy.findById(req.body.pharmacyId)
+    if (!pharmacy || String(pharmacy.userId) !== req.user._id) {
+      return res.status(403).json({ error: 'Access denied to this pharmacy.' })
     }
 
     req.body.image = `/uploads/items/${req.file.filename}`
     const newItem = await Item.create(req.body)
     res.status(201).json(newItem)
   } catch (error) {
+    console.error('Error creating item:', error)
     res.status(500).json({ error: error.message })
   }
 })
+
+// router.post('/:pharmacyId', async (req, res) => {
+//   try {
+//     if (req.user.role !== 'Admin' && req.user.role !== 'Vendor') {
+//       return res.status(403).json({ error: 'Access denied.' })
+//     }
+
+//     if (req.user.role === 'Vendor') {
+//       const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
+//       if (!pharmacy || String(pharmacy.userId) !== req.user._id) {
+//         return res
+//           .status(403)
+//           .json({ error: 'Access denied to this pharmacy.' })
+//       }
+//     }
+
+//     req.body.pharmacyId = req.params.pharmacyId
+
+//     const newItem = await Item.create(req.body)
+
+//     res.status(201).json(newItem)
+//   } catch (error) {
+//     res.status(500).json({ error: error.message })
+//   }
+// })
 
 // Get all items (all roles)
 router.get('/', async (req, res) => {
@@ -58,22 +84,43 @@ router.get('/', async (req, res) => {
 })
 
 // Get a single item by ID (all roles)
-router.get('/:itemId', async (req, res) => {
+// router.get('/:itemId', async (req, res) => {
+//   try {
+//     const item = await Item.findById(req.params.itemId)
+//     if (!item) {
+//       return res.status(404).json({ error: 'Item not found.' })
+//     }
+
+//     if (req.user.role === 'vendor') {
+//       const pharmacy = await Pharmacy.findById(item.pharmacyId)
+//       if (!pharmacy || String(pharmacy.userId) !== req.user._id) {
+//         return res.status(403).json({ error: 'Access denied to this item.' })
+//       }
+//     }
+
+//     res.status(200).json(item)
+//   } catch (error) {
+//     res.status(500).json({ error: error.message })
+//   }
+// })
+
+router.get('/:pharmacyId', async (req, res) => {
+  const { pharmacyId } = req.params
+
   try {
-    const item = await Item.findById(req.params.itemId)
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found.' })
+    // Check if the pharmacy exists
+    const pharmacy = await Pharmacy.findById(pharmacyId)
+    if (!pharmacy) {
+      return res.status(404).json({ error: 'Pharmacy not found.' })
     }
 
-    if (req.user.role === 'vendor') {
-      const pharmacy = await Pharmacy.findById(item.pharmacyId)
-      if (!pharmacy || String(pharmacy.userId) !== req.user._id) {
-        return res.status(403).json({ error: 'Access denied to this item.' })
-      }
-    }
+    // Retrieve items for the specified pharmacy
+    const items = await Item.find({ pharmacyId: pharmacyId })
 
-    res.status(200).json(item)
+    // Return the items
+    res.status(200).json(items)
   } catch (error) {
+    console.error('Error retrieving items:', error)
     res.status(500).json({ error: error.message })
   }
 })

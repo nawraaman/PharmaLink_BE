@@ -18,7 +18,7 @@ app.use(express.json())
 app.use('/auth', authRouter)
 app.use('/user', verifyToken, userRouter)
 app.use('/pharmacy', pharmacyRoutes)
-app.use('/item', verifyToken, itemRoutes)
+app.use('/item', itemRoutes)
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI)
