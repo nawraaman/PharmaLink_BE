@@ -24,69 +24,32 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter })
 
-// // Create pharmacy (vendors only, and must be approved)
-// router.post('/', verifyToken, upload.single('logo'), async (req, res) => {
-//   try {
-
-//     if (req.user.role !== 'Vendor') {
-//       return res
-//         .status(403)
-//         .json({ error: 'Only vendors can create pharmacies.' })
-//     }
-
-//     const user = await User.findById(req.user._id)
-
-//     // console.log(user)
-
-//     if (!user || !user.Approved) {
-//       return res
-//         .status(403)
-//         .json({ error: 'You are not approved to create a pharmacy.' })
-//     }
-
-//     req.body.userId = req.user._id
-
-//     req.body.logo = `/uploads/logos/${req.file.filename}`
-
-//     console.log(req.body)
-
-//     const newPharmacy = await Pharmacy.create(req.body)
-//     res.status(201).json(newPharmacy)
-//   } catch (error) {
-//     res.status(400).json({ error: error.message })
-//   }
-// })
-
 // Create pharmacy (vendors only, and must be approved)
-//this one is working but without logo
-// router.post('/', verifyToken, async (req, res) => {
-//   try {
-//     if (req.user.role !== 'Vendor') {
-//       return res
-//         .status(403)
-//         .json({ error: 'Only vendors can create pharmacies.' })
-//     }
+router.post('/', verifyToken, upload.single('logo'), async (req, res) => {
+  try {
+    if (req.user.role !== 'Vendor') {
+      return res
+        .status(403)
+        .json({ error: 'Only vendors can create pharmacies.' })
+    }
 
-//     const user = await User.findById(req.user._id)
+    const user = await User.findById(req.user._id)
+    if (!user || !user.Approved) {
+      return res
+        .status(403)
+        .json({ error: 'You are not approved to create a pharmacy.' })
+    }
 
-//     // console.log(user)
+    req.body.userId = req.user._id
+    req.body.logo = `/uploads/logos/${req.file.filename}`
 
-//     if (!user || !user.Approved) {
-//       return res
-//         .status(403)
-//         .json({ error: 'You are not approved to create a pharmacy.' })
-//     }
-
-//     req.body.userId = req.user._id
-
-//     console.log(req.body)
-
-//     const newPharmacy = await Pharmacy.create(req.body)
-//     res.status(201).json(newPharmacy)
-//   } catch (error) {
-//     res.status(400).json({ error: error.message })
-//   }
-// })
+    const newPharmacy = await Pharmacy.create(req.body)
+    res.status(201).json(newPharmacy)
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+    console.log(error)
+  }
+})
 
 // Get all pharmacies (all roles)
 router.get('/', async (req, res) => {
