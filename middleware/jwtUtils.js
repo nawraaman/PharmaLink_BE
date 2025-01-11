@@ -14,7 +14,12 @@ const signToken = (user) => {
 const verifyToken = (req, res, next) => {
   try {
     const token = req.headers.authorization.split('Bearer ')[1]
+    if (!token) {
+      return res.status(401).json({ error: 'Token missing.' })
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    console.log('Decoded User:', decoded) // This should show the decoded user information
 
     req.user = {
       _id: decoded._id,
@@ -23,6 +28,7 @@ const verifyToken = (req, res, next) => {
 
     next()
   } catch (error) {
+    console.error('Token Error:', error)
     res.status(401).json({ error: 'Invalid or missing token.' })
   }
 }
