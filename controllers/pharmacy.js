@@ -2,6 +2,7 @@ const express = require('express')
 const Pharmacy = require('../models/Pharmacy')
 const User = require('../models/User')
 const multer = require('multer')
+const { verifyToken } = require('../middleware/jwtUtils')
 const router = express.Router()
 
 const storage = multer.diskStorage({
@@ -23,31 +24,69 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter })
 
+// // Create pharmacy (vendors only, and must be approved)
+// router.post('/', verifyToken, upload.single('logo'), async (req, res) => {
+//   try {
+
+//     if (req.user.role !== 'Vendor') {
+//       return res
+//         .status(403)
+//         .json({ error: 'Only vendors can create pharmacies.' })
+//     }
+
+//     const user = await User.findById(req.user._id)
+
+//     // console.log(user)
+
+//     if (!user || !user.Approved) {
+//       return res
+//         .status(403)
+//         .json({ error: 'You are not approved to create a pharmacy.' })
+//     }
+
+//     req.body.userId = req.user._id
+
+//     req.body.logo = `/uploads/logos/${req.file.filename}`
+
+//     console.log(req.body)
+
+//     const newPharmacy = await Pharmacy.create(req.body)
+//     res.status(201).json(newPharmacy)
+//   } catch (error) {
+//     res.status(400).json({ error: error.message })
+//   }
+// })
+
 // Create pharmacy (vendors only, and must be approved)
-router.post('/', upload.single('logo'), async (req, res) => {
-  try {
-    if (req.user.role !== 'vendor') {
-      return res
-        .status(403)
-        .json({ error: 'Only vendors can create pharmacies.' })
-    }
+//this one is working but without logo
+// router.post('/', verifyToken, async (req, res) => {
+//   try {
+//     if (req.user.role !== 'Vendor') {
+//       return res
+//         .status(403)
+//         .json({ error: 'Only vendors can create pharmacies.' })
+//     }
 
-    const user = await User.findById(req.user._id)
-    if (!user || !user.approval) {
-      return res
-        .status(403)
-        .json({ error: 'You are not approved to create a pharmacy.' })
-    }
+//     const user = await User.findById(req.user._id)
 
-    req.body.userId = req.user._id
-    req.body.logo = `/uploads/logos/${req.file.filename}`
+//     // console.log(user)
 
-    const newPharmacy = await Pharmacy.create(req.body)
-    res.status(201).json(newPharmacy)
-  } catch (error) {
-    res.status(400).json({ error: error.message })
-  }
-})
+//     if (!user || !user.Approved) {
+//       return res
+//         .status(403)
+//         .json({ error: 'You are not approved to create a pharmacy.' })
+//     }
+
+//     req.body.userId = req.user._id
+
+//     console.log(req.body)
+
+//     const newPharmacy = await Pharmacy.create(req.body)
+//     res.status(201).json(newPharmacy)
+//   } catch (error) {
+//     res.status(400).json({ error: error.message })
+//   }
+// })
 
 // Get all pharmacies (all roles)
 router.get('/', async (req, res) => {
@@ -81,8 +120,8 @@ router.put('/:pharmacyId', async (req, res) => {
     }
 
     if (
-      req.user.role === 'admin' ||
-      (req.user.role === 'vendor' &&
+      req.user.role === 'Admin' ||
+      (req.user.role === 'Vendor' &&
         pharmacy.userId.toString() === req.user._id)
     ) {
       const updatedPharmacy = await Pharmacy.findByIdAndUpdate(
@@ -100,9 +139,9 @@ router.put('/:pharmacyId', async (req, res) => {
 })
 
 // Delete pharmacy (admin only)
-router.delete('/:pharmacyId', async (req, res) => {
+router.delete('/:pharmacyId', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Access denied.' })
     }
 
@@ -114,20 +153,6 @@ router.delete('/:pharmacyId', async (req, res) => {
     res.status(200).json({ message: 'Pharmacy deleted successfully.' })
   } catch (error) {
     res.status(500).json({ error: error.message })
-  }
-})
-
-router.get('/user/:userId/pharmacy-count', async (req, res) => {
-  const { userId } = req.params
-
-  try {
-    const pharmacyCount = await Pharmacy.countDocuments({ userId })
-    return res.status(200).json({ count: pharmacyCount })
-  } catch (error) {
-    console.error(error)
-    return res
-      .status(500)
-      .json({ message: 'Something went wrong while counting pharmacies.' })
   }
 })
 

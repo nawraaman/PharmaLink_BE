@@ -1,10 +1,12 @@
 const User = require('../models/User')
 const router = require('express').Router()
 const { verifyToken } = require('../middleware/jwtUtils')
+const Pharmacy = require('../models/Pharmacy')
 
 router.get('/profile', async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
+    // console.log(req.user._id)
     return res.status(201).json(user)
   } catch (error) {
     console.error(error)
@@ -45,6 +47,30 @@ router.put('/approve-user', async (req, res) => {
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Something went wrong!' })
+  }
+})
+
+/// Get pharmacy count for a specific user (requires token verification)
+router.get('/pharmacycount', async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: 'Unauthorized access' })
+    }
+
+    // console.log(req.user.role)
+
+    // console.log(req.user._id)
+    const Count = await Pharmacy.countDocuments({
+      userId: req.user._id
+    })
+
+    // console.log(Count)
+    return res.status(200).json({ count: Count })
+  } catch (error) {
+    console.error('Error while counting pharmacies:', error)
+    return res
+      .status(500)
+      .json({ message: 'Something went wrong while counting pharmacies.' })
   }
 })
 
