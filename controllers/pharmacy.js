@@ -2,6 +2,7 @@ const express = require('express')
 const Pharmacy = require('../models/Pharmacy')
 const User = require('../models/User')
 const multer = require('multer')
+const { verifyToken } = require('../middleware/jwtUtils')
 const router = express.Router()
 
 const storage = multer.diskStorage({
@@ -24,9 +25,9 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter })
 
 // Create pharmacy (vendors only, and must be approved)
-router.post('/', upload.single('logo'), async (req, res) => {
+router.post('/', verifyToken, upload.single('logo'), async (req, res) => {
   try {
-    if (req.user.role !== 'vendor') {
+    if (req.user.role !== 'Vendor') {
       return res
         .status(403)
         .json({ error: 'Only vendors can create pharmacies.' })
@@ -74,7 +75,7 @@ router.get('/:pharmacyId', async (req, res) => {
 })
 
 // Update pharmacy (admin: any, vendor: only their own)
-router.put('/:pharmacyId', async (req, res) => {
+router.put('/:pharmacyId', verifyToken, async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
     if (!pharmacy) {
@@ -82,8 +83,8 @@ router.put('/:pharmacyId', async (req, res) => {
     }
 
     if (
-      req.user.role === 'admin' ||
-      (req.user.role === 'vendor' &&
+      req.user.role === 'Admin' ||
+      (req.user.role === 'Vendor' &&
         pharmacy.userId.toString() === req.user._id)
     ) {
       const updatedPharmacy = await Pharmacy.findByIdAndUpdate(
@@ -101,9 +102,9 @@ router.put('/:pharmacyId', async (req, res) => {
 })
 
 // Delete pharmacy (admin only)
-router.delete('/:pharmacyId', async (req, res) => {
+router.delete('/:pharmacyId', verifyToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Access denied.' })
     }
 
