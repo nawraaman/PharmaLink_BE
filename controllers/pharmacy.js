@@ -33,7 +33,7 @@ router.post('/', upload.single('logo'), async (req, res) => {
     }
 
     const user = await User.findById(req.user._id)
-    if (!user || !user.approval) {
+    if (!user || !user.Approved) {
       return res
         .status(403)
         .json({ error: 'You are not approved to create a pharmacy.' })
@@ -46,6 +46,7 @@ router.post('/', upload.single('logo'), async (req, res) => {
     res.status(201).json(newPharmacy)
   } catch (error) {
     res.status(400).json({ error: error.message })
+    console.log(error)
   }
 })
 
