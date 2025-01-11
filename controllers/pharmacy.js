@@ -75,7 +75,7 @@ router.get('/:pharmacyId', async (req, res) => {
 })
 
 // Update pharmacy (admin: any, vendor: only their own)
-router.put('/:pharmacyId', async (req, res) => {
+router.put('/:pharmacyId', verifyToken, async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
     if (!pharmacy) {
