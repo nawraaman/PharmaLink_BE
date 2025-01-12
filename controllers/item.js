@@ -26,10 +26,6 @@ const upload = multer({ storage, fileFilter })
 
 router.post('/', verifyToken, upload.single('image'), async (req, res) => {
   try {
-    console.log('User Role:', req.user.role)
-    console.log('Request Body:', req.body)
-    console.log('File:', req.file)
-
     if (req.user.role !== 'Admin' && req.user.role !== 'Vendor') {
       return res.status(403).json({ error: 'Access denied.' })
     }
