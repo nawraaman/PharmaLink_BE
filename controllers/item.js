@@ -48,31 +48,6 @@ router.post('/', verifyToken, upload.single('image'), async (req, res) => {
   }
 })
 
-// router.post('/:pharmacyId', async (req, res) => {
-//   try {
-//     if (req.user.role !== 'Admin' && req.user.role !== 'Vendor') {
-//       return res.status(403).json({ error: 'Access denied.' })
-//     }
-
-//     if (req.user.role === 'Vendor') {
-//       const pharmacy = await Pharmacy.findById(req.params.pharmacyId)
-//       if (!pharmacy || String(pharmacy.userId) !== req.user._id) {
-//         return res
-//           .status(403)
-//           .json({ error: 'Access denied to this pharmacy.' })
-//       }
-//     }
-
-//     req.body.pharmacyId = req.params.pharmacyId
-
-//     const newItem = await Item.create(req.body)
-
-//     res.status(201).json(newItem)
-//   } catch (error) {
-//     res.status(500).json({ error: error.message })
-//   }
-// })
-
 // Get all items (all roles)
 router.get('/', async (req, res) => {
   try {
@@ -82,27 +57,6 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: error.message })
   }
 })
-
-// Get a single item by ID (all roles)
-// router.get('/:itemId', async (req, res) => {
-//   try {
-//     const item = await Item.findById(req.params.itemId)
-//     if (!item) {
-//       return res.status(404).json({ error: 'Item not found.' })
-//     }
-
-//     if (req.user.role === 'vendor') {
-//       const pharmacy = await Pharmacy.findById(item.pharmacyId)
-//       if (!pharmacy || String(pharmacy.userId) !== req.user._id) {
-//         return res.status(403).json({ error: 'Access denied to this item.' })
-//       }
-//     }
-
-//     res.status(200).json(item)
-//   } catch (error) {
-//     res.status(500).json({ error: error.message })
-//   }
-// })
 
 router.get('/:pharmacyId', async (req, res) => {
   const { pharmacyId } = req.params
