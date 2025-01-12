@@ -6,7 +6,7 @@ const Pharmacy = require('../models/Pharmacy')
 router.get('/profile', async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-    // console.log(req.user._id)
+
     return res.status(201).json(user)
   } catch (error) {
     console.error(error)
@@ -57,14 +57,10 @@ router.get('/pharmacycount', async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized access' })
     }
 
-    // console.log(req.user.role)
-
-    // console.log(req.user._id)
     const Count = await Pharmacy.countDocuments({
       userId: req.user._id
     })
 
-    // console.log(Count)
     return res.status(200).json({ count: Count })
   } catch (error) {
     console.error('Error while counting pharmacies:', error)

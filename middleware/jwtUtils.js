@@ -19,7 +19,6 @@ const verifyToken = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    console.log('Decoded User:', decoded) // This should show the decoded user information
 
     req.user = {
       _id: decoded._id,
